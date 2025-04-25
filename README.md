@@ -12,9 +12,10 @@ Low-cost implementation of face recognition to unlock Windows.
 - Opencv
 - dlib
 - pyserial
+> - 安装库：`pip install dlib-bin opencv-python pyserial`    
 
 ## ThirdParty
-- [dlib dat](https://xfxuezhang.lanzouo.com/ibMSz2u5pjeb)
+- [dlib feature](https://xfxuezhang.lanzouo.com/ibMSz2u5pjeb)
 - [Digispark Driver](https://raw.githubusercontent.com/songxf1024/faceUnlock/refs/heads/main/thirdparty/Digistump.Drivers.zip)
 - [package_digistump_index.json](https://raw.githubusercontent.com/songxf1024/faceUnlock/refs/heads/main/thirdparty/package_digistump_index.json)
 - [zadig](https://raw.githubusercontent.com/songxf1024/faceUnlock/refs/heads/main/thirdparty/zadig-2.9.exe)
