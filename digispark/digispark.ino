@@ -1,8 +1,10 @@
 // https://github.com/Robotechnic/DigiKeyboardFr
 #include "DigiKeyboard.h"
-
 // https://github.com/SpenceKonde/ATTinyCore
 #include "TinySoftwareSerial.h"
+
+#define KEY_ESC 41
+#define KEY_TAB 43
 
 // 板载LED 通常在 Digispark 上是引脚 1
 const int LED_PIN = 1;
@@ -12,6 +14,7 @@ soft_ring_buffer my_rx_buffer = { { 0 }, 0, 0 };
 TinySoftwareSerial mySerial(&my_rx_buffer, 0, 2);
 
 void setup() {
+  delay(200);
   // 串口和键盘初始化设置
   mySerial.begin(9600);
   DigiKeyboard.sendKeyStroke(0);
