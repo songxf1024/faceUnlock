@@ -15,21 +15,23 @@ def is_locked_by_logonui():
     return False
 
 
+def test_digispark_port(port_name, baudrate, test_string, return_dict):
+    try:
+        ser = serial.Serial(port=port_name, baudrate=baudrate, timeout=0.5)
+        time.sleep(1)
+        ser.reset_input_buffer()
+        ser.write(test_string.encode('utf-8'))
+        time.sleep(0.3)
+        response = ''
+        if ser.in_waiting > 0:
+            response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore').strip()
+        ser.close()
+        return_dict[port_name] = response
+    except Exception:
+        return_dict[port_name] = None
+            
 def find_digispark(baudrate=9600, test_string="test\n", timeout_per_port=2):
-    def test_port_worker(port_name, baudrate, test_string, return_dict):
-        try:
-            ser = serial.Serial(port=port_name, baudrate=baudrate, timeout=0.5)
-            time.sleep(1)
-            ser.reset_input_buffer()
-            ser.write(test_string.encode('utf-8'))
-            time.sleep(0.3)
-            response = ''
-            if ser.in_waiting > 0:
-                response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore').strip()
-            ser.close()
-            return_dict[port_name] = response
-        except Exception:
-            return_dict[port_name] = None
+
     ports = serial.tools.list_ports.comports()
     print(f"🔍 正在并行扫描 {len(ports)} 个串口设备...")
     manager = multiprocessing.Manager()
@@ -39,7 +41,7 @@ def find_digispark(baudrate=9600, test_string="test\n", timeout_per_port=2):
     for port in ports:
         port_name = port.device
         print(f"准备测试 {port_name}...")
-        p = multiprocessing.Process(target=test_port_worker, args=(port_name, baudrate, test_string, return_dict))
+        p = multiprocessing.Process(target=test_digispark_port, args=(port_name, baudrate, test_string, return_dict))
         processes.append(p)
         p.start()
     # 等待所有子进程结束（统一超时控制）
