@@ -1,19 +1,72 @@
 import os
 import serial
+import serial.tools.list_ports
 import time
 import cv2
 import dlib
 import numpy as np
 import psutil
 from datetime import datetime
-
+import multiprocessing
 
 def is_locked_by_logonui():
     for proc in psutil.process_iter(['name']):
-        if proc.info['name'] == "LogonUI.exe":
-            return True
+        if proc.info['name'] == "LogonUI.exe": return True
     return False
 
+
+def find_digispark(baudrate=9600, test_string="test\n", timeout_per_port=2):
+    def test_port_worker(port_name, baudrate, test_string, return_dict):
+        try:
+            ser = serial.Serial(port=port_name, baudrate=baudrate, timeout=0.5)
+            time.sleep(1)
+            ser.reset_input_buffer()
+            ser.write(test_string.encode('utf-8'))
+            time.sleep(0.3)
+            response = ''
+            if ser.in_waiting > 0:
+                response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore').strip()
+            ser.close()
+            return_dict[port_name] = response
+        except Exception:
+            return_dict[port_name] = None
+    ports = serial.tools.list_ports.comports()
+    print(f"🔍 正在并行扫描 {len(ports)} 个串口设备...")
+    manager = multiprocessing.Manager()
+    return_dict = manager.dict()
+    processes = []
+    # 给每个端口启动一个子进程
+    for port in ports:
+        port_name = port.device
+        print(f"准备测试 {port_name}...")
+        p = multiprocessing.Process(target=test_port_worker, args=(port_name, baudrate, test_string, return_dict))
+        processes.append(p)
+        p.start()
+    # 等待所有子进程结束（统一超时控制）
+    start_time = time.time()
+    while time.time() - start_time < timeout_per_port:
+        alive = any(p.is_alive() for p in processes)
+        if not alive: break
+        time.sleep(0.1)
+    # 杀掉仍然活着的子进程
+    for p in processes:
+        if p.is_alive():
+            print(f"⚠️ 超时终止子进程 {p.name}")
+            p.terminate()
+            p.join()
+    # 检查结果
+    for port in ports:
+        port_name = port.device
+        response = return_dict.get(port_name, None)
+        if response:
+            print(f"收到 {port_name} 的回显：{repr(response)}")
+            if response.lower() == test_string.strip().lower():
+                print(f"✅ 找到 Digispark！端口：{port_name}")
+                return port_name
+        else:
+            print(f"⚠️ {port_name} 无响应或异常")
+    print("❌ 没找到Digispark设备")
+    return None
 
 def send_to_digispark(port='COM3', baudrate=9600, send_string='u\n', wait_time=0.5, timeout=2):
     """
@@ -53,7 +106,6 @@ def send_to_digispark(port='COM3', baudrate=9600, send_string='u\n', wait_time=0
         return None
 
 
-
 def get_face_embedding(image, detector, sp, model):
     dets = detector(image, 1)
     if len(dets) == 0:
@@ -61,7 +113,6 @@ def get_face_embedding(image, detector, sp, model):
     shape = sp(image, dets[0])
     face_descriptor = model.compute_face_descriptor(image, shape)
     return np.array(face_descriptor), dets[0]  # 返回人脸特征和矩形框
-
 
 # 加载多图参考特征
 def load_reference_embeddings(image_paths, detector, sp, model):
@@ -74,7 +125,6 @@ def load_reference_embeddings(image_paths, detector, sp, model):
             embeddings.append(embedding)
     return embeddings
 
-
 def save_recognized_face(frame):
     folder = "recognized_faces"
     os.makedirs(folder, exist_ok=True)
@@ -82,7 +132,6 @@ def save_recognized_face(frame):
     filename = os.path.join(folder, f"{timestamp}.jpg")
     cv2.imwrite(filename, frame)
     print(f"📸 已保存识别图像到: {filename}")
-
 
 def monitor_face_dlib(reference_img_path, cooldown_sec=10, port='COM3', debug=False):
     detector = dlib.get_frontal_face_detector()
@@ -142,10 +191,13 @@ def monitor_face_dlib(reference_img_path, cooldown_sec=10, port='COM3', debug=Fa
 
 
 if __name__ == "__main__":
-    # 调用函数开始运行
-    monitor_face_dlib(
-        reference_img_path="faces/me.jpg",      # 人脸图像路径
-        cooldown_sec=10,                        # 冷却时间 10 秒
-        port="COM3",                            # Digispark 所连接的串口
-        debug=False                             
-    )
+    digispark_port = find_digispark()
+    if digispark_port:
+        monitor_face_dlib(
+            reference_img_path="faces/me.jpg",
+            cooldown_sec=10,
+            port=digispark_port,
+            debug=False
+        )
+    else:
+        print("没有找到 Digispark，退出程序")
