@@ -15,14 +15,14 @@ def is_locked_by_logonui():
     return False
 
 
-def send_to_digispark(port='COM3', baudrate=9600, send_char='u', wait_time=0.5, timeout=2):
+def send_to_digispark(port='COM3', baudrate=9600, send_string='u\n', wait_time=0.5, timeout=2):
     """
-    向指定串口发送一个字符，并接收返回内容。
+    向指定串口发送一个字符串，并接收返回内容。
 
     参数:
     - port: 串口端口 (例如 'COM3')
     - baudrate: 波特率，默认为 9600
-    - send_char: 要发送的字符
+    - send_string: 要发送的完整字符串（建议带换行符）
     - wait_time: 发送后等待响应的时间（秒）
     - timeout: 串口超时时间
 
@@ -30,18 +30,18 @@ def send_to_digispark(port='COM3', baudrate=9600, send_char='u', wait_time=0.5, 
     - Digispark 的串口回复内容（字符串）
     """
     try:
-        # 打开串口
         ser = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
         time.sleep(2)  # 等待串口初始化
 
-        # 发送字符
-        ser.write(send_char.encode())
-        print(f"已发送字符：{send_char}")
+        # 发送字符串
+        if not send_string.endswith('\n'):
+            send_string += '\n'  # 自动补\n，防止漏掉
+        ser.write(send_string.encode('utf-8'))
+        print(f"已发送字符串：{repr(send_string)}")
 
         # 等待 Digispark 处理并回传
         time.sleep(wait_time)
 
-        # 读取串口回传
         response = ser.read_all().decode(errors='ignore')
         print("收到回复：", response)
 
@@ -51,6 +51,7 @@ def send_to_digispark(port='COM3', baudrate=9600, send_char='u', wait_time=0.5, 
     except serial.SerialException as e:
         print("串口错误:", e)
         return None
+
 
 
 def get_face_embedding(image, detector, sp, model):
@@ -95,14 +96,23 @@ def monitor_face_dlib(reference_img_path, cooldown_sec=10, port='COM3', debug=Fa
         return
     print("🔍 启动 dlib 人脸识别监控（带调试画面）" if debug else "🔍 启动 dlib 人脸识别监控（无界面）")
     last_trigger_time = 0
-    cap = cv2.VideoCapture(0)
-
+    cap = None
     try:
         while True:
             if not is_locked_by_logonui(): 
+                # 系统已解锁
+                if cap: 
+                    print("🔓 检测到系统已解锁，释放摄像头")
+                    cap.release()
+                    cap = None
+                    if debug: cv2.destroyAllWindows()
                 time.sleep(1)
                 continue
             
+            # 系统是锁屏状态
+            if cap is None:
+                print("🔄 检测到锁屏，打开摄像头")
+                cap = cv2.VideoCapture(0)
             ret, frame = cap.read()
             if not ret:
                 print("摄像头读取失败")
@@ -118,7 +128,7 @@ def monitor_face_dlib(reference_img_path, cooldown_sec=10, port='COM3', debug=Fa
                     cv2.putText(frame, f"dist={dist:.2f}", (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
                 if dist < 0.6 and time.time() - last_trigger_time > cooldown_sec:
                     print(f"✅ 人脸识别成功（距离 {dist:.2f}），触发 Digispark")
-                    send_to_digispark(send_char='u', port=port)
+                    send_to_digispark(send_string="unlock", port=port)
                     save_recognized_face(frame)
                     last_trigger_time = time.time()
             if debug:
