@@ -25,3 +25,9 @@ Low-cost implementation of face recognition to unlock Windows.
 - [【教程】Digispark搭建开发环境和测试烧录](https://xfxuezhang.blog.csdn.net/article/details/147400007)
 - [【教程】Digispark实现串口通信](https://xfxuezhang.blog.csdn.net/article/details/147404668)
 
+# Demo    
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/4b315d68-0056-4b60-85f8-f165b188acd9" alt="image" width="400"/>
+</p>
+
+
