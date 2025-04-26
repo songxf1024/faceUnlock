@@ -16,7 +16,7 @@
 #include "WCharacter.h"
 #include "WString.h"
 #include "TinySoftwareSerial.h"
-#include "HardwareSerial.h"
+// #include "HardwareSerial.h"
 
 uint16_t makeWord(uint16_t w);
 uint16_t makeWord(byte h, byte l);
