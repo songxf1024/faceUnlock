@@ -8,7 +8,7 @@ Low-cost implementation of face recognition to unlock Windows.
 # Environments
 ## Hardware
 - Digispark Attiny85
-- USB Serial
+- USB-TTL Serial
 
 
 ## Software
@@ -31,11 +31,23 @@ pip install dlib-bin opencv-python pyserial
 - [...](https://github.com/songxf1024/faceUnlock/tree/main/thirdparty)
 
 
+# Usage
+1. 使用 Arduino IDE 烧录 Digispark 的代码；
+2. 将 Digispark 的 PB0(TX) 和 PB1(RX) 与 USB-TTL 连接；
+3. 将 Digispark 和 USB-TTL 连接电脑；
+4. 在电脑上运行 listen.py ；
+5. listen.py 检测到电脑锁屏后，会自动触发人脸识别，识别成功后调用 Digispark 进行解锁；
+
 # Blog
 - [【教程】Digispark搭建开发环境和测试烧录](https://xfxuezhang.blog.csdn.net/article/details/147400007)
 - [【教程】Digispark实现串口通信](https://xfxuezhang.blog.csdn.net/article/details/147404668)
 - [【教程】ISP烧录Digispark的BootLoader固件](https://xfxuezhang.blog.csdn.net/article/details/147524103)
 
+
+# TODO
+- HID的输入内容(如解锁密码)由 listen.py 发送，而不是在 Digispark 中写死；
+- 将 Digispark 和 USB-TTL 集成在一块电路板上；
+- ...
 
 
 
