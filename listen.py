@@ -162,8 +162,12 @@ def monitor_face_dlib(reference_img_path, cooldown_sec=10, port='COM3', debug=Fa
             
             # 系统是锁屏状态
             if cap is None:
-                print("🔄 检测到锁屏，打开摄像头")
+                print("🔄 检测到锁屏，打开摄像头，10秒后开始检测")
+                # 10秒后再开始检测，防止人还没走，就解锁了
+                time.sleep(10)
                 cap = cv2.VideoCapture(0)
+                # 对于IP摄像头：
+                # cap = cv2.VideoCapture('http://192.168.1.109:8080/video')
             ret, frame = cap.read()
             if not ret:
                 print("摄像头读取失败")
