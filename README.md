@@ -18,10 +18,6 @@ Low-cost implementation of face recognition to unlock Windows.
 - dlib
 - pyserial
 
-```bash
-pip install dlib-bin opencv-python pyserial
-```
-
 
 ## ThirdParty
 - [dlib feature](https://xfxuezhang.lanzouo.com/ibMSz2u5pjeb)
@@ -29,14 +25,26 @@ pip install dlib-bin opencv-python pyserial
 - [package_digistump_index.json](https://raw.githubusercontent.com/songxf1024/faceUnlock/refs/heads/main/thirdparty/package_digistump_index.json)
 - [zadig](https://raw.githubusercontent.com/songxf1024/faceUnlock/refs/heads/main/thirdparty/zadig-2.9.exe)
 - [...](https://github.com/songxf1024/faceUnlock/tree/main/thirdparty)
+- [VC_redist](https://learn.microsoft.com/zh-cn/cpp/windows/latest-supported-vc-redist?view=msvc-170)
 
 
 # Usage
 1. 使用 Arduino IDE 烧录 Digispark 的代码；
 2. 将 Digispark 的 PB0(TX) 和 PB1(RX) 与 USB-TTL 连接；
 3. 将 Digispark 和 USB-TTL 连接电脑；
-4. 在电脑上运行 listen.py ；
-5. listen.py 检测到电脑锁屏后，会自动触发人脸识别，识别成功后调用 Digispark 进行解锁；
+4. 在faces目录下放目标人脸图片，可以放多张；
+5. 在电脑上运行 listen.py ；
+6. listen.py 检测到电脑锁屏后，会自动触发人脸识别，识别成功后调用 Digispark 进行解锁；
+
+
+# Develop
+```bash
+conda create -n faceunlock python=3.9
+conda activate faceunlock
+
+pip install opencv-python pyserial onnx onnxruntime insightface psutil tqdm
+```
+
 
 # Blog
 - [【教程】Digispark搭建开发环境和测试烧录](https://xfxuezhang.blog.csdn.net/article/details/147400007)
