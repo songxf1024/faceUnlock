@@ -43,7 +43,9 @@ Low-cost implementation of face recognition to unlock Windows.
 conda create -n faceunlock python=3.9
 conda activate faceunlock
 
-pip install opencv-python pyserial onnx onnxruntime insightface psutil tqdm
+pip install opencv-python pyserial onnx insightface psutil tqdm onnxruntime
+# if you have GPU, you can use:
+#  pip install onnxruntime-gpu
 ```
 
 2. modify `listen.py`.    
