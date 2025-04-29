@@ -143,7 +143,7 @@ class FaceRecognizer:
     
     def recognize(self, frame):
         faces = self.app.get(frame)
-        if not faces: return False, None, None
+        if not faces: return False, None, None, None
         face = faces[0]
         similarities = [
             (calculate_similarity(face.embedding, ref_emb), name)
