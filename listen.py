@@ -110,8 +110,7 @@ def send_to_digispark(port='COM3', baudrate=9600, send_string='u\n', wait_time=0
 
 def get_face_embedding(image, detector, sp, model):
     dets = detector(image, 1)
-    if len(dets) == 0:
-        return None, None
+    if len(dets) == 0: return None, None
     shape = sp(image, dets[0])
     face_descriptor = model.compute_face_descriptor(image, shape)
     return np.array(face_descriptor), dets[0]  # 返回人脸特征和矩形框
@@ -159,15 +158,16 @@ def monitor_face_dlib(reference_img_path, cooldown_sec=10, port='COM3', debug=Fa
                     if debug: cv2.destroyAllWindows()
                 time.sleep(1)
                 continue
-            
             # 系统是锁屏状态
             if cap is None:
                 print("🔄 检测到锁屏，打开摄像头，10秒后开始检测")
                 # 10秒后再开始检测，防止人还没走，就解锁了
                 time.sleep(10)
-                cap = cv2.VideoCapture(0)
-                # 对于IP摄像头：
-                # cap = cv2.VideoCapture('http://192.168.1.109:8080/video')
+                cap = cv2.VideoCapture(1)
+                cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                print("......")
             ret, frame = cap.read()
             if not ret:
                 print("摄像头读取失败")
@@ -189,7 +189,7 @@ def monitor_face_dlib(reference_img_path, cooldown_sec=10, port='COM3', debug=Fa
             if debug:
                 cv2.imshow("Face Debug View", frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'): break
-            time.sleep(0.1)
+            # time.sleep(0.1)
     finally:
         cap.release()
         if debug: cv2.destroyAllWindows()
@@ -197,6 +197,35 @@ def monitor_face_dlib(reference_img_path, cooldown_sec=10, port='COM3', debug=Fa
 
 
 if __name__ == "__main__":
+    #----------------debug----------------------#
+    # detector = dlib.get_frontal_face_detector()
+    # sp = dlib.shape_predictor("features/shape_predictor_68_face_landmarks.dat")
+    # model = dlib.face_recognition_model_v1("features/dlib_face_recognition_resnet_model_v1.dat")
+    # ref_img = cv2.imread("faces/me.jpg")
+    # ref_rgb = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
+    # ref_embedding, _ = get_face_embedding(ref_rgb, detector, sp, model)
+    # if ref_embedding is None: print("❌ 无法提取参考图像人脸特征")
+    # cap = cv2.VideoCapture(1)
+    # # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    # # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    # # cap.set(cv2.CAP_PROP_FPS, 10)
+    # cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+    # while True:
+    #     ret, frame = cap.read()
+    #     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    #     embedding, rect = get_face_embedding(rgb, detector, sp, model)
+    #     if embedding is not None:
+    #         dist = np.linalg.norm(ref_embedding - embedding)
+    #         # 画出人脸框
+    #         left, top, right, bottom = rect.left(), rect.top(), rect.right(), rect.bottom()
+    #         cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+    #         cv2.putText(frame, f"dist={dist:.2f}", (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
+    #         if dist < 0.6: print(f"✅ 人脸识别成功（距离 {dist:.2f}），触发 Digispark")
+    #     cv2.imshow("Face Debug View", frame)
+    #     if cv2.waitKey(1) & 0xFF == ord('q'): break
+    #     time.sleep(0.1)
+    #----------------debug----------------------#
+    
     digispark_port = find_digispark()
     if digispark_port:
         monitor_face_dlib(
@@ -207,3 +236,4 @@ if __name__ == "__main__":
         )
     else:
         print("没有找到 Digispark，退出程序")
+
