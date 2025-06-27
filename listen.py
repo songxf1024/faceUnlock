@@ -22,21 +22,12 @@ def is_locked_by_logonui():
         if proc.info['name'] == "LogonUI.exe": return True
     return False
 
-def save_frame(frame):
-    folder = "recognized_faces"
+def save_frame(frame, folder="recognized_faces"):
     os.makedirs(folder, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = os.path.join(folder, f"{timestamp}.jpg")
     cv2.imwrite(filename, frame)
-    log(f"📸 已保存识别图像到: {filename}")
-
-def save_unknown_frame(frame):
-    folder = "unknown_faces"
-    os.makedirs(folder, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = os.path.join(folder, f"{timestamp}.jpg")
-    cv2.imwrite(filename, frame)
-    log(f"📸 已保存陌生人脸图像到: {filename}")
+    log(f"📸 已保存图像到: {filename}")
 
 def calculate_similarity(embedding1, embedding2):
     # 计算余弦相似度
@@ -185,7 +176,7 @@ class FaceRecognizer:
     
     def recognize(self, frame):
         faces = self.app.get(frame)
-        if not faces: return False, None, None, None
+        if not faces: return False, -1, None, None
         face = faces[0]
         similarities = [
             (calculate_similarity(face.embedding, ref_emb), name)
@@ -236,11 +227,11 @@ def monitor(reference_img_path, cooldown_sec=10, debug=False):
                 log(f"✅ 识别成功！识别为: {matched_name}，相似度: {similarity:.2f}，触发 Digispark 解锁")
                 switch_ime(language="EN")
                 serial_mgr.send("unlock")
-                save_frame(frame)
+                save_frame(frame, folder="recognized_faces")
                 last_trigger_time = time.time()
-            elif not recognized:
+            elif not recognized and similarity != -1:
                 log(f"❌ 未识别的人脸，相似度: {similarity:.2f}，保存图像")
-                save_unknown_frame(frame)
+                save_frame(frame, folder="unknown_faces")
             if debug:
                 cv2.imshow("Debug View", frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'): break
